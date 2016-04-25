@@ -7,14 +7,9 @@ ft = {
 }
 
 analyze_bin4 = function (filename) 
-	io.input(filename)
 	print("filename = "..filename)
-	--s = io.read("*a")
-	--io.write(s)
-
 	local lines = {}
-	for line in io.lines() do table.insert(lines, line); end
-	io.close();
+	for line in io.lines(filename) do table.insert(lines, line); end
 
 	dut = { bin4_lock = 109, bin4_gate = 45; {},{}}
 	dut[1].bin4 = {
@@ -40,13 +35,12 @@ analyze_bin4 = function (filename)
 	func_bin4 = function (site, i, v)
 		if (v:find("DUT"..site.." FAIL  =>  BIN04")) then
 			for j = i-1, 1, -1 do
-				if (lines[j]:find("DPS".. site) and lines[j]:find("35.000uA")) then
+				if (lines[j]:find("DPS"..site) and lines[j]:find("35.000uA")) then
 					--print(j, lines[j])
 					local ws = {}
 					for w in string.gmatch(lines[j], "%g+") do ws[#ws+1] = w end
-					--print("hi ", ws[1], ws[2], ws[3], ws[4], ws[5], ws[6])
+					--print("hi ", table.unpack(ws))
 					table.insert(dut[site].bin4.out_of_limit, tonumber(ws[4]:sub(1,-3)));
-					--print "hi"
 					break
 				elseif (lines[j]:find("DUT"..site.." RUN <COM03>") and lines[j]:find("FAIL")) then
 					--print(j, lines[j])
