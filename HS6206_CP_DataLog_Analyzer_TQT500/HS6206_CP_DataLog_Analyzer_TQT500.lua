@@ -2,8 +2,8 @@ print "\n\n------------------\nHello, world\n"
 
 ft = {
 [[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\03#-R.LOG]],
-[[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\05#-R.LOG]],
-[[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\07#-2R.LOG]],
+--[[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\05#-R.LOG]],
+--[[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\07#-2R.LOG]],
 }
 
 analyze_bin4 = function (filename) 
@@ -36,6 +36,7 @@ analyze_bin4 = function (filename)
 		if (v:find("DUT"..site.." FAIL  =>  BIN04")) then
 			for j = i-1, 1, -1 do
 				if (lines[j]:find("DPS"..site) and lines[j]:find("35.000uA")) then
+				--if (lines[j]:find("DPS"..site.."[gs]+".."35.000uA")) then
 					--print(j, lines[j])
 					local ws = {}
 					for w in string.gmatch(lines[j], "%g+") do ws[#ws+1] = w end
