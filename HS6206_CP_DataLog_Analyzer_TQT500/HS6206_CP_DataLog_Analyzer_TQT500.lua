@@ -1,9 +1,9 @@
 print "\n\n------------------\nHello, world\n"
 
 ft = {
-[[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\03#-R.LOG]],
----[[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\05#-R.LOG]],
----[[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\07#-2R.LOG]],
+ [[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\03#-R.LOG]],
+ [[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\05#-R.LOG]],
+ [[d:\Users\hgz\Documents\work\LuaScripts\HS6206_CP_DataLog_Analyzer_TQT500\07#-2R.LOG]],
 }
 
 analyze_bin4 = function (filename) 
@@ -11,41 +11,48 @@ analyze_bin4 = function (filename)
 	local lines = {}
 	for line in io.lines(filename) do table.insert(lines, line); end
 
-	dut = { bin4_lock = 109, bin4_gate = 45; {},{}}
-	dut[1].bin4 = {
-		--v = {};
-		out_of_limit = {};
-		tb_report_fail = {};
-		total = function () return #dut[1].bin4.out_of_limit + #dut[1].bin4.tb_report_fail end;
-		v_lt_gate = {};
-		v_gt_gate = {};
-		v_lock = {};
+	bin4t = {
+		new = 	function (self)
+					local o = {}
+					o.out_of_limit = {};
+					o.tb_report_fail = {};
+					o.v_lt_gate = {};
+					o.v_gt_gate = {};
+					o.v_lock = {};
+					setmetatable(o, self)
+					self.__index = self
+					return o
+				end;
+		total = function (self) return #self.out_of_limit + #self.tb_report_fail end;
 	}
-	dut[2].bin4 = {
-		--v = {};
-		out_of_limit = {};
-		tb_report_fail = {};
-		total = function () return #dut[2].bin4.out_of_limit + #dut[2].bin4.tb_report_fail end;
-		v_lt_gate = {};
-		v_gt_gate = {};
-		v_lock = {};
-	}
-
-
-	func_bin4 = function (site, i, v)
-		if (v:find("DUT"..site.." FAIL  =>  BIN04")) then
+	
+	-- site: bin infos of a site.
+	site = {}
+	function site:new(o)
+		o = o or {}
+		o.bin4 = bin4t:new()
+		setmetatable(o, self)
+		self.__index = self
+		return o
+	end
+	
+	dut = { bin4_lock = 109, bin4_gate = 45; site:new(), site:new() }
+	
+	
+	func_bin4 = function (site_num, i, v)
+		if (v:find("DUT"..site_num.." FAIL  =>  BIN04")) then
 			for j = i-1, 1, -1 do
-				if (lines[j]:find("DPS"..site) and lines[j]:find("35.000uA")) then
-				--if (lines[j]:find("DPS"..site.."[gs]+".."35.000uA")) then
-					--print(j, lines[j])
+				if (lines[j]:find("DPS"..site_num) and lines[j]:find("35.000uA")) then
+				-- if (lines[j]:find("DPS"..site_num.."[gs]+".."35.000uA")) then
+					-- print(j, lines[j])
 					local ws = {}
 					for w in string.gmatch(lines[j], "%g+") do ws[#ws+1] = w end
-					--print("hi ", table.unpack(ws))
-					table.insert(dut[site].bin4.out_of_limit, tonumber(ws[4]:sub(1,-3)));
+					-- print("hi ", table.unpack(ws))
+					table.insert(dut[site_num].bin4.out_of_limit, tonumber(ws[4]:sub(1,-3)));
 					break
-				elseif (lines[j]:find("DUT"..site.." RUN <COM03>") and lines[j]:find("FAIL")) then
-					--print(j, lines[j])
-					table.insert(dut[site].bin4.tb_report_fail, j);
+				elseif (lines[j]:find("DUT"..site_num.." RUN <COM03>") and lines[j]:find("FAIL")) then
+					-- print(j, lines[j])
+					table.insert(dut[site_num].bin4.tb_report_fail, j);
 					break
 				end
 			end
@@ -65,14 +72,14 @@ analyze_bin4 = function (filename)
 	table.sort(dut[1].bin4.out_of_limit); --dut[1].bin4.out_of_limit:sort() can't work
 	table.sort(dut[2].bin4.out_of_limit)
 
-	for site = 1, 2 do
-		for i, v in ipairs(dut[site].bin4.out_of_limit) do
+	for site_num = 1, 2 do
+		for i, v in ipairs(dut[site_num].bin4.out_of_limit) do
 			if (v > dut.bin4_lock) then
-				table.insert(dut[site].bin4.v_lock, v)
+				table.insert(dut[site_num].bin4.v_lock, v)
 			elseif (v > dut.bin4_gate) then
-				table.insert(dut[site].bin4.v_gt_gate, v)
+				table.insert(dut[site_num].bin4.v_gt_gate, v)
 			else
-				table.insert(dut[site].bin4.v_lt_gate, v)
+				table.insert(dut[site_num].bin4.v_lt_gate, v)
 			end
 		end
 	end
@@ -85,17 +92,17 @@ analyze_bin4 = function (filename)
 	--]]
 	---[[
 	--print "\n"
-	for site = 1, 2 do
+	for site_num = 1, 2 do
 		print "\n"
-		print("dut["..site.."].bin4.tb_report_fail = ", #dut[site].bin4.tb_report_fail)
-		print("dut["..site.."].bin4.v_lock =\t",  #dut[site].bin4.v_lock)
-		print("dut["..site.."].bin4.v_gt_gate =\t",  #dut[site].bin4.v_gt_gate)
-		print("dut["..site.."].bin4.v_lt_gate =\t",  #dut[site].bin4.v_lt_gate)
-		print("dut["..site.."].bin4.out_of_limit = ", #dut[site].bin4.out_of_limit)
-		print("dut["..site.."].bin4.total =\t",  dut[site].bin4.total())
+		print("dut["..site_num.."].bin4.tb_report_fail = ", #dut[site_num].bin4.tb_report_fail)
+		print("dut["..site_num.."].bin4.v_lock =\t",  #dut[site_num].bin4.v_lock)
+		print("dut["..site_num.."].bin4.v_gt_gate =\t",  #dut[site_num].bin4.v_gt_gate)
+		print("dut["..site_num.."].bin4.v_lt_gate =\t",  #dut[site_num].bin4.v_lt_gate)
+		print("dut["..site_num.."].bin4.out_of_limit = ", #dut[site_num].bin4.out_of_limit)
+		print("dut["..site_num.."].bin4.total =\t",  dut[site_num].bin4:total())
 	end
 	print("\ndut.bin4.v_gt_gate.total =", #dut[1].bin4.tb_report_fail+#dut[1].bin4.v_lock+#dut[1].bin4.v_gt_gate + #dut[2].bin4.tb_report_fail+#dut[2].bin4.v_lock+#dut[2].bin4.v_gt_gate);
-	print("dut.bin4.total =\t", dut[1].bin4.total()+dut[2].bin4.total());
+	print("dut.bin4.total =\t", dut[1].bin4:total()+dut[2].bin4:total());
 	--]]
 end
 
