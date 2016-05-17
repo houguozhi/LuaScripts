@@ -1,7 +1,7 @@
 -- print "\n\n------------------\nHello, world\n"
-print (lua_file_full_path)
+print ("\n" .. lua_file_full_path)
 local path = lua_file_full_path:sub(1, -lua_file_full_path:reverse():find("\\"))
-print (path)
+-- print (path)
 
 ft = {
  [[D94364.xls]],
